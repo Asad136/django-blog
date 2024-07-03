@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from .models import Blog
-from .forms import BlogForm
+from .models import Blog,Comment
+from .forms import BlogForm,CommentForm
+
 
 @login_required
 def create_blog(request):
@@ -22,9 +23,13 @@ def list_blogs(request):
     blogs = Blog.objects.all()
     return render(request, 'blog/list_blogs.html', {'blogs': blogs})
 
+
 def blog_detail(request, pk):
-    blog = Blog.objects.get(pk=pk)
-    return render(request, 'blog/blog_detail.html', {'blog': blog})
+    blog = get_object_or_404(Blog, pk=pk)
+    comments = blog.comments.all() 
+    comment_form = CommentForm()
+    return render(request, 'blog/blog_detail.html', {'blog': blog, 'comments': comments, 'comment_form': comment_form})
+
 
 
 @login_required
@@ -63,3 +68,17 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, "registration/signup.html", {"form": form})
+
+
+@login_required
+def add_comment(request, pk):
+    if request.method == 'POST':
+        blog = get_object_or_404(Blog, pk=pk)
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.blog = blog
+            comment.user = request.user
+            comment.save()
+            return redirect('blog_detail', pk=pk)  
+    return redirect('blog_detail', pk=pk) 
