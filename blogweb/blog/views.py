@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from .models import Blog,Comment
 from .forms import BlogForm,CommentForm
+from django.http import JsonResponse
 
 
 @login_required
@@ -72,13 +73,21 @@ def signup(request):
 
 @login_required
 def add_comment(request, pk):
+    blog = get_object_or_404(Blog, pk=pk)
     if request.method == 'POST':
-        blog = get_object_or_404(Blog, pk=pk)
         form = CommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.blog = blog
             comment.user = request.user
             comment.save()
-            return redirect('blog_detail', pk=pk)  
-    return redirect('blog_detail', pk=pk) 
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'user': comment.user.username,
+                    'text': comment.text,
+                    'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                })
+            
+            return redirect('blog_detail', pk=pk)
+    return redirect('blog_detail', pk=pk)

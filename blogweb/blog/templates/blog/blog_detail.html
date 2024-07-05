@@ -2,6 +2,9 @@
 <html>
 <head>
     <title>{{ blog.title }}</title>
+    {% load static %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'blog/js/comments.js' %}"></script>
 </head>
 <body>
     <h1>{{ blog.title }}</h1>
